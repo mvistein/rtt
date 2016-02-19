@@ -78,6 +78,7 @@ extern "C" {
 #include <native/mutex.h>
 #include <native/sem.h>
 #include <native/cond.h>
+#include <trank.h>
 
 // BC: support Xenomai < 2.3.0
 #if ((CONFIG_XENO_VERSION_MAJOR*1000)+(CONFIG_XENO_VERSION_MINOR*100)+CONFIG_XENO_REVISION_LEVEL) < 2300
@@ -126,15 +127,15 @@ extern "C" {
 static inline TIME_SPEC ticks2timespec(TICK_TIME hrt)
 {
 	TIME_SPEC timevl;
-	timevl.tv_sec = rt_timer_tsc2ns(hrt) / 1000000000LL;
-	timevl.tv_nsec = rt_timer_tsc2ns(hrt) % 1000000000LL;
+	timevl.tv_sec = rt_timer_ticks2ns(hrt) / 1000000000LL;
+	timevl.tv_nsec = rt_timer_ticks2ns(hrt) % 1000000000LL;
 	return timevl;
 }
 
 	// hrt is in ticks
 static inline TICK_TIME timespec2ticks(const TIME_SPEC* ts)
 {
-	return  rt_timer_ns2tsc(ts->tv_nsec + ts->tv_sec*1000000000LL);
+	return  rt_timer_ns2ticks(ts->tv_nsec + ts->tv_sec*1000000000LL);
 }
 
 // turn this on to have maximum detection of valid system calls.
@@ -156,17 +157,17 @@ static inline TICK_TIME timespec2ticks(const TIME_SPEC* ts)
 
 static inline NANO_TIME rtos_get_time_ns(void) { return rt_timer_ticks2ns(rt_timer_read()); }
 
-static inline TICK_TIME rtos_get_time_ticks(void) { return rt_timer_tsc(); }
+static inline TICK_TIME rtos_get_time_ticks(void) { return rt_timer_read(); }
 
-static inline TICK_TIME ticksPerSec(void) { return rt_timer_ns2tsc( 1000 * 1000 * 1000 ); }
+static inline TICK_TIME ticksPerSec(void) { return rt_timer_ns2ticks( 1000 * 1000 * 1000 ); }
 
 // WARNING: Orocos 'ticks' are 'Xenomai tsc' and Xenomai `ticks' are not
 // used in the Orocos API. Thus Orocos uses `Xenomai tsc' and `Xenomai ns',
 // yet Xenomai requires `Xenomai ticks' at the interface
 // ==> do not use nano2ticks to convert to `Xenomai ticks' because it
 // converts to `Xenomai tsc'.
-static inline TICK_TIME nano2ticks(NANO_TIME t) { return rt_timer_ns2tsc(t); }
-static inline NANO_TIME ticks2nano(TICK_TIME t) { return rt_timer_tsc2ns(t); }
+static inline TICK_TIME nano2ticks(NANO_TIME t) { return rt_timer_ns2ticks(t); }
+static inline NANO_TIME ticks2nano(TICK_TIME t) { return rt_timer_ticks2ns(t); }
 
 static inline int rtos_nanosleep(const TIME_SPEC *rqtp, TIME_SPEC *rmtp)
 	{
@@ -263,15 +264,18 @@ static inline int rtos_nanosleep(const TIME_SPEC *rqtp, TIME_SPEC *rmtp)
     static inline int rtos_mutex_trylock( rt_mutex_t* m)
     {
         CHK_XENO_CALL();
-        struct rt_mutex_info info;
+        //struct rt_mutex_info info;
+        RT_MUTEX_INFO info;
         rt_mutex_inquire(m, &info );
-#if ((CONFIG_XENO_VERSION_MAJOR*1000)+(CONFIG_XENO_VERSION_MINOR*100)+CONFIG_XENO_REVISION_LEVEL) >= 2500
+/*#if ((CONFIG_XENO_VERSION_MAJOR*1000)+(CONFIG_XENO_VERSION_MINOR*100)+CONFIG_XENO_REVISION_LEVEL) >= 2500
         if (info.locked)
             return 0;
 #else
         if (info.lockcnt)
             return 0;
-#endif
+#endif*/
+        if(&(info.owner) == NULL)
+        	 return 0;
         // from here on: we're sure our thread didn't lock it
         // now check if any other thread locked it:
         return rt_mutex_acquire(m, TM_NONBLOCK);

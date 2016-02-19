@@ -34,15 +34,22 @@ set(header_NAME    native/task.h)
 
 # Libraries to find
 set(XENOMAI_NAME   xenomai)
-set(XENOMAI_NATIVE_NAME   native)
+set(XENOMAI_NATIVE_NAME   trank)
+set(XENOMAI_ALCHEMY_NAME   alchemy)
+set(XENOMAI_COBALT_NAME   cobalt)
+set(XENOMAI_COPPERPLATE_NAME   copperplate)
+
 
 # Find headers and libraries
 if(XENOMAI_ROOT_DIR)
   # Use location specified by environment variable
   find_program(XENOMAI_XENO_CONFIG NAMES xeno-config  PATHS ${XENOMAI_ROOT_DIR}/bin NO_DEFAULT_PATH)
-  find_path(XENOMAI_INCLUDE_DIR        NAMES ${header_NAME}        PATHS ${XENOMAI_ROOT_DIR}/include PATH_SUFFIXES xenomai NO_DEFAULT_PATH)
+  find_path(XENOMAI_INCLUDE_DIR        NAMES ${header_NAME}        PATHS ${XENOMAI_ROOT_DIR}/include/trank PATH_SUFFIXES xenomai NO_DEFAULT_PATH)
   find_library(XENOMAI_LIBRARY         NAMES ${XENOMAI_NAME}       PATHS ${XENOMAI_ROOT_DIR}/lib     NO_DEFAULT_PATH)
   find_library(XENOMAI_NATIVE_LIBRARY         NAMES ${XENOMAI_NATIVE_NAME}       PATHS ${XENOMAI_ROOT_DIR}/lib     NO_DEFAULT_PATH)
+  find_library(XENOMAI_ALCHEMY_LIBRARY         NAMES ${XENOMAI_ALCHEMY_NAME}       PATHS ${XENOMAI_ROOT_DIR}/lib     NO_DEFAULT_PATH)
+  find_library(XENOMAI_COBALT_LIBRARY         NAMES ${XENOMAI_COBALT_NAME}       PATHS ${XENOMAI_ROOT_DIR}/lib     NO_DEFAULT_PATH)
+  find_library(XENOMAI_COPPERPLATE_LIBRARY         NAMES ${XENOMAI_COPPERPLATE_NAME}       PATHS ${XENOMAI_ROOT_DIR}/lib     NO_DEFAULT_PATH)
 else()
   # Use default CMake search process
   find_program(XENOMAI_XENO_CONFIG NAMES xeno-config )
@@ -54,18 +61,22 @@ endif()
 if( XENOMAI_LIBRARY AND XENOMAI_INCLUDE_DIR AND NOT XENOMAI_XENO_CONFIG )
   message(SEND_ERROR "Your Xenomai installation is broken: I can not determine Xenomai Native cflags/ldflags without xeno-config.")
 else()
-  execute_process(COMMAND ${XENOMAI_XENO_CONFIG} --skin=native --ldflags OUTPUT_VARIABLE XENOMAI_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-  execute_process(COMMAND ${XENOMAI_XENO_CONFIG} --skin=native --cflags OUTPUT_VARIABLE XENOMAI_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(COMMAND ${XENOMAI_XENO_CONFIG} --skin=native --compat --ldflags OUTPUT_VARIABLE XENOMAI_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(COMMAND ${XENOMAI_XENO_CONFIG} --skin=native --compat --cflags OUTPUT_VARIABLE XENOMAI_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
+
+message(STATUS "Xenomai ${XENOMAI_CFLAGS}")
+message(STATUS "Xenomai ${XENOMAI_LDFLAGS}")
+
 
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.
 # NOTE: Singular variables for this library, plural for libraries this this lib depends on.
 set(XENOMAI_PROCESS_INCLUDES XENOMAI_INCLUDE_DIR)
 if ( XENOMAI_LIBRARY )
-  set(XENOMAI_PROCESS_LIBS XENOMAI_NATIVE_LIBRARY XENOMAI_LIBRARY )
+  set(XENOMAI_PROCESS_LIBS XENOMAI_NATIVE_LIBRARY XENOMAI_ALCHEMY_LIBRARY XENOMAI_COBALT_LIBRARY XENOMAI_COPPERPLATE_LIBRARY XENOMAI_LIBRARY )
 else( XENOMAI_LIBRARY )
-  set(XENOMAI_PROCESS_LIBS XENOMAI_NATIVE_LIBRARY)
+  set(XENOMAI_PROCESS_LIBS XENOMAI_NATIVE_LIBRARY XENOMAI_ALCHEMY_LIBRARY XENOMAI_COBALT_LIBRARY XENOMAI_COPPERPLATE_LIBRARY)
 endif( XENOMAI_LIBRARY )
 
 

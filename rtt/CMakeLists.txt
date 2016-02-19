@@ -53,6 +53,8 @@ IF ( OS_EMBEDDED )
   SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections")
 ENDIF ( OS_EMBEDDED )
 
+#SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -ltrank  -lalchemy -lcopperplate -L/usr/xenomai/lib -lcobalt -lpthread -lrt")
+
 ### Logger
 OPTION(OROBLD_DISABLE_LOGGING "Disable Logging Infrastructure" OFF)
 CMAKE_DEPENDENT_OPTION(OROSEM_PRINTF_LOGGING "Logger uses printf()/fprintf() instead of std::iostream." OFF "NOT OROBLD_DISABLE_LOGGING" OFF)

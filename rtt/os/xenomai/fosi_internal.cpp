@@ -441,7 +441,7 @@ namespace RTT
             RT_TASK* tt = mytask->xenoptr;
             if ( tt )
                 if ( rt_task_inquire ( tt, &info) == 0 )
-                    return info.bprio;
+                	return info.prio;
             return -1;
         }
 

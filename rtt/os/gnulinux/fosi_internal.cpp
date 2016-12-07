@@ -154,14 +154,37 @@ namespace RTT
 	    }
 	    rv = pthread_create(&(task->thread), &(task->attr),
 	    		rtos_posix_thread_wrapper, xcookie);
+        if (rv != 0) {
+            log(Error) << "Failed to create thread " << task->name << ": "
+                       << strerror(rv) << endlog();
+            return rv;
+        }
 
-	if ( cpu_affinity != (unsigned)~0 ) {
-	  log(Debug) << "Setting CPU affinity to " << cpu_affinity << endlog();
-	  if (0 != rtos_task_set_cpu_affinity(task, cpu_affinity))
-	    {
-	      log(Error) << "Failed to set CPU affinity to " << cpu_affinity << endlog();
-	    }
-	}
+        // Set thread name to match task name, to help with debugging
+        {
+            // trim the name to fit 16 bytes restriction (including terminating
+            // \0 character) of pthread_setname_np
+            static const int MAX_THREAD_NAME_SIZE = 15;
+            const char *thread_name = task->name;
+            std::size_t thread_name_len = strlen(thread_name);
+            if (thread_name_len > MAX_THREAD_NAME_SIZE) {
+                thread_name += thread_name_len - MAX_THREAD_NAME_SIZE;
+            }
+            int result = pthread_setname_np(task->thread, thread_name);
+            if (result != 0) {
+                log(Error) << "Failed to set thread name for " << task->name << ": "
+                           << strerror(result) << endlog();
+            }
+        }
+
+        if ( cpu_affinity != (unsigned)~0 ) {
+            log(Debug) << "Setting CPU affinity to " << cpu_affinity << endlog();
+            int result = rtos_task_set_cpu_affinity(task, cpu_affinity);
+            if (result != 0) {
+                log(Error) << "Failed to set CPU affinity to " << cpu_affinity << " for " << task->name << ": "
+                           << strerror(result) << endlog();
+            }
+        }
 
         return rv;
 	}
@@ -254,9 +277,16 @@ namespace RTT
 
         if (task->wait_policy == ORO_WAIT_ABS)
         {
+          // in the case of overrun by more than 4 periods,
+          // skip all the updates before now, with the next update aligned to period
+          int maxDelayInPeriods = 4;
+          NANO_TIME period = task->period;
+          if (now - wake > maxDelayInPeriods*period) {
+            period = period * ((now - wake) / period);
+          }
           // program next period:
           // 1. convert period to timespec
-          TIME_SPEC ts = ticks2timespec( nano2ticks( task->period) );
+          TIME_SPEC ts = ticks2timespec( nano2ticks(period) );
           // 2. Add ts to periodMark (danger: tn guards for overflows!)
           NANO_TIME tn = (task->periodMark.tv_nsec + ts.tv_nsec);
           task->periodMark.tv_nsec = tn % 1000000000LL;

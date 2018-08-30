@@ -293,7 +293,7 @@ namespace RTT
              * @return *this
              */
             template<class T>
-            type_discovery &load_a_type(const boost::serialization::array<T> &t, boost::mpl::false_)
+            type_discovery &load_a_type(const boost::serialization::array_wrapper<T> &t, boost::mpl::false_)
             {
                 mparts.push_back(new internal::PartDataSource< carray<T> > ( carray<T>(t), mparent) );
                 return *this;

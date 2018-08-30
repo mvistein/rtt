@@ -49,7 +49,7 @@ namespace RTT
         /**
          * Wraps a C array such that we can return a C array
          * from a DataSource.
-         * Inspired on boost::serialization::array.
+         * Inspired on boost::serialization::array_wrapper.
          *
          * Default copy-constructible (shallow copy).
          *
@@ -91,12 +91,12 @@ namespace RTT
             carray() : m_t(0), m_element_count(0) {}
 
             /**
-             * We are constructible from boost::serialization::array<T>
+             * We are constructible from boost::serialization::array_wrapper<T>
              * Makes a shallow copy in order to keep the reference to
              * the original data.
              * @param orig
              */
-            carray( boost::serialization::array<T> const& orig)
+            carray( boost::serialization::array_wrapper<T> const& orig)
             : m_t( orig.address() ), m_element_count( orig.count() ) {
                 if (m_element_count == 0)
                     m_t = 0;
@@ -162,7 +162,7 @@ namespace RTT
              * @param orig
              */
             template <class OtherT>
-            const carray<T>& operator=( boost::serialization::array<OtherT> const& orig ) {
+            const carray<T>& operator=( boost::serialization::array_wrapper<OtherT> const& orig ) {
                 if (orig.address() != m_t)
                     for(std::size_t i = 0; i != orig.count() && i != count(); ++i)
                         m_t[i] = orig.address()[i];

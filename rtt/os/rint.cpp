@@ -47,8 +47,8 @@
 #include <cmath>
 
 #ifdef _MSC_VER
-double rint( double value )
+/*double rint( double value )
   {
 	return floor( value + 0.5 );
-  }
+  }*/
 #endif
